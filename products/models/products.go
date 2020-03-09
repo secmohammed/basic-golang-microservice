@@ -1,7 +1,8 @@
-package data
+package models
 
 import (
     "encoding/json"
+    "fmt"
     "io"
     "time"
 )
@@ -18,6 +19,7 @@ type Product struct {
     DeletedAt   string  `json:"deleted_at,omitempty"`
 }
 
+var errProductNotFound = fmt.Errorf("Product not found")
 var products = []*Product{
     {
         ID:          1,
@@ -42,13 +44,57 @@ var products = []*Product{
 // Products are product colleciton.
 type Products []*Product
 
-// ToJSON method is used to transform the data to a json response.
+// ToJSON method is used to transform the product to a json response.
+func (p *Product) ToJSON(w io.Writer) error {
+    e := json.NewEncoder(w)
+    return e.Encode(p)
+}
+
+// ToJSON method is used to transform the products to a json response.
 func (p *Products) ToJSON(w io.Writer) error {
     e := json.NewEncoder(w)
     return e.Encode(p)
 }
 
+// FromJSON method is used to decode a json.
+func (p *Product) FromJSON(r io.Reader) error {
+    e := json.NewDecoder(r)
+    return e.Decode(p)
+
+}
+
+func getNextID() int {
+    product := products[len(products)-1]
+    return product.ID + 1
+}
+
 // GetProducts function is used to get the products.
 func GetProducts() Products {
     return products
+}
+
+// AddProduct function is used to append a new product to the collection.
+func AddProduct(product *Product) {
+    product.ID = getNextID()
+    products = append(products, product)
+}
+
+func findProduct(id int) (*Product, int, error) {
+    for key, product := range products {
+        if product.ID == id {
+            return product, key, nil
+        }
+    }
+    return nil, -1, errProductNotFound
+}
+
+// UpdateProduct function is used to update a product.
+func UpdateProduct(id int, product *Product) error {
+    _, key, err := findProduct(id)
+    if err != nil {
+        return err
+    }
+    product.ID = id
+    products[key] = product
+    return nil
 }
