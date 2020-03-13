@@ -14,10 +14,11 @@ import (
 // RegisterAPIRoutes is used to register the routes we need for the web application.
 func RegisterAPIRoutes() *http.Server {
     router := mux.NewRouter()
+    router.Path("/api/products").Handler(http.HandlerFunc(handlers.Index))
     productsPublicArea := router.PathPrefix("/api/products").Subrouter()
-    productsPublicArea.HandleFunc("", handlers.Index).Methods("GET")
+    productsPublicArea.Use(handlers.MiddlewareProductValidation)
     productsPublicArea.HandleFunc("", handlers.Store).Methods("POST")
-    productsPublicArea.HandleFunc("/{id}", handlers.Store).Methods("PUT")
+    productsPublicArea.HandleFunc("/{id}", handlers.Update).Methods("PUT")
     c := cors.New(cors.Options{
         AllowedOrigins:   []string{"http://localhost:" + os.Getenv("APP_PORT")},
         AllowedHeaders:   []string{"Authorization", "Content-Type"},
