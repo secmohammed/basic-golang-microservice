@@ -4,16 +4,19 @@ import (
     "encoding/json"
     "fmt"
     "io"
+    "regexp"
     "time"
+
+    "github.com/go-playground/validator"
 )
 
 // Product type.
 type Product struct {
     ID          int     `json:"id"`
-    Name        string  `json:"name"`
-    Description string  `json:"description"`
-    Price       float32 `json:"price"`
-    SKU         string  `json:"sku"`
+    Name        string  `json:"name" validate:"required"`
+    Description string  `json:"description" validate:"required"`
+    Price       float32 `json:"price" validate:"gt=0"`
+    SKU         string  `json:"sku" validate:"required,sku"`
     CreatedAt   string  `json:"created_at"`
     UpdatedAt   string  `json:"updated_at"`
     DeletedAt   string  `json:"deleted_at,omitempty"`
@@ -48,6 +51,20 @@ type Products []*Product
 func (p *Product) ToJSON(w io.Writer) error {
     e := json.NewEncoder(w)
     return e.Encode(p)
+}
+
+// Validate function is used to validate the struct of product.
+func (p *Product) Validate() error {
+    validate := validator.New()
+    validate.RegisterValidation("sku", func(fl validator.FieldLevel) bool {
+        re := regexp.MustCompile(`[a-z]+-[a-z]+-[a-z]+`)
+        matches := re.FindAllString(fl.Field().String(), -1)
+        if len(matches) != 1 {
+            return false
+        }
+        return true
+    })
+    return validate.Struct(p)
 }
 
 // ToJSON method is used to transform the products to a json response.

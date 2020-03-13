@@ -4,6 +4,7 @@ import (
     "build-microservice-with-go/products/models"
     "build-microservice-with-go/products/utils"
     "context"
+    "fmt"
     "log"
     "net/http"
     "strconv"
@@ -70,6 +71,15 @@ var MiddlewareProductValidation = func(next http.Handler) http.Handler {
 
         if err := prod.FromJSON(r.Body); err != nil {
             http.Error(rw, "Unable to marshal json", http.StatusBadRequest)
+            return
+        }
+        // validate the product.
+        if err := prod.Validate(); err != nil {
+            http.Error(
+                rw,
+                fmt.Sprintf("Error validating product: %s", err),
+                http.StatusUnprocessableEntity,
+            )
             return
         }
         ctx := context.WithValue(r.Context(), utils.KeyProduct{}, prod)
