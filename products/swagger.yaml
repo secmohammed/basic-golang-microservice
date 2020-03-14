@@ -1,7 +1,15 @@
 basePath: /
 consumes:
-- appication/json
+- application/json
 definitions:
+  GenericError:
+    description: GenericError is a generic error message returned by a server
+    properties:
+      message:
+        type: string
+        x-go-name: Message
+    type: object
+    x-go-package: build-microservice-with-go/products/utils
   Product:
     properties:
       created_at:
@@ -52,8 +60,18 @@ definitions:
     title: Product type.
     type: object
     x-go-package: build-microservice-with-go/products/models
+  ValidationError:
+    description: ValidationError is a collection of validation error messages
+    properties:
+      messages:
+        items:
+          type: string
+        type: array
+        x-go-name: Messages
+    type: object
+    x-go-package: build-microservice-with-go/products/utils
 info:
-  description: Documntation for Product API
+  description: Documentation for Product API
   title: of Product API
   version: 1.0.0
 paths:
@@ -76,22 +94,55 @@ paths:
       - products
   /products/{id}:
     delete:
+      description: Delete a products by id
       operationId: deleteProduct
       parameters:
-      - description: the id of the product to delete/update from the database.
+      - description: The id of the product for which the operation relates
         format: int64
         in: path
         name: id
         required: true
         type: integer
         x-go-name: ID
-      summary: delete product.
+      responses:
+        "201":
+          $ref: '#/responses/noContentResponse'
+        "404":
+          $ref: '#/responses/errorResponse'
+        "501":
+          $ref: '#/responses/errorResponse'
+      tags:
+      - products
+    get:
+      description: Return a list of products from the database
+      operationId: listSingleProduct
+      parameters:
+      - description: The id of the product for which the operation relates
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+        x-go-name: ID
+      responses:
+        "200":
+          $ref: '#/responses/productResponse'
+        "404":
+          $ref: '#/responses/errorResponse'
       tags:
       - products
     put:
       operationId: updateProduct
       parameters:
-      - description: the id of the product to delete/update from the database.
+      - description: |-
+          Product data structure to Update or Create.
+          Note: the id field is ignored by update and create operations
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/Product'
+      - description: The id of the product for which the operation relates
         format: int64
         in: path
         name: id
@@ -107,12 +158,22 @@ paths:
 produces:
 - application/json
 responses:
+  errorResponse:
+    description: Generic error message returned as a string
+    schema:
+      $ref: '#/definitions/GenericError'
+  errorValidation:
+    description: Validation errors defined as an array of strings
+    schema:
+      $ref: '#/definitions/ValidationError'
+  noContentResponse:
+    description: No content is returned by this API endpoint
   productResponse:
-    description: returned product in the response.
+    description: Data structure representing a single product
     schema:
       $ref: '#/definitions/Product'
   productsResponse:
-    description: A list of products return in the response.
+    description: A list of products
     schema:
       items:
         $ref: '#/definitions/Product'

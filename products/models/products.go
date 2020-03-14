@@ -37,7 +37,8 @@ type Product struct {
     DeletedAt string `json:"deleted_at,omitempty"`
 }
 
-var errProductNotFound = fmt.Errorf("Product not found")
+// ErrProductNotFound is used to return an error message in case of product not found.
+var ErrProductNotFound = fmt.Errorf("Product not found")
 var products = []*Product{
     {
         ID:          1,
@@ -62,12 +63,6 @@ var products = []*Product{
 // Products are product colleciton.
 type Products []*Product
 
-// ToJSON method is used to transform the product to a json response.
-func (p *Product) ToJSON(w io.Writer) error {
-    e := json.NewEncoder(w)
-    return e.Encode(p)
-}
-
 // Validate function is used to validate the struct of product.
 func (p *Product) Validate() error {
     validate := validator.New()
@@ -83,9 +78,9 @@ func (p *Product) Validate() error {
 }
 
 // ToJSON method is used to transform the products to a json response.
-func (p *Products) ToJSON(w io.Writer) error {
+func ToJSON(i interface{}, w io.Writer) error {
     e := json.NewEncoder(w)
-    return e.Encode(p)
+    return e.Encode(i)
 }
 
 // FromJSON method is used to decode a json.
@@ -117,7 +112,31 @@ func findProduct(id int) (*Product, int, error) {
             return product, key, nil
         }
     }
-    return nil, -1, errProductNotFound
+    return nil, -1, ErrProductNotFound
+}
+
+// GetProductByID returns a single product which matches the id from the
+// database.
+// If a product is not found this function returns a ProductNotFound error
+func GetProductByID(id int) (*Product, error) {
+    i := findIndexByProductID(id)
+    if id == -1 {
+        return nil, ErrProductNotFound
+    }
+
+    return products[i], nil
+}
+
+// findIndex finds the index of a product in the database
+// returns -1 when no product can be found
+func findIndexByProductID(id int) int {
+    for i, p := range products {
+        if p.ID == id {
+            return i
+        }
+    }
+
+    return -1
 }
 
 // UpdateProduct function is used to update a product.

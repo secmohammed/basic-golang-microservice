@@ -67,8 +67,7 @@ func NewProducts(logger *log.Logger) *Products {
 
 // Index function is used to index the current products.
 func Index(w http.ResponseWriter, r *http.Request) {
-    lp := models.GetProducts()
-    err := lp.ToJSON(w)
+    err := models.ToJSON(models.GetProducts(), w)
     if err != nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
@@ -84,7 +83,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 func Store(response http.ResponseWriter, request *http.Request) {
     prod := request.Context().Value(utils.KeyProduct{}).(models.Product)
     models.AddProduct(&prod)
-    if err := prod.ToJSON(response); err != nil {
+    if err := models.ToJSON(prod, response); err != nil {
         http.Error(response, "Unable to marshal json", http.StatusBadRequest)
         return
 
@@ -109,7 +108,7 @@ func Update(response http.ResponseWriter, request *http.Request) {
         return
 
     }
-    if err := prod.ToJSON(response); err != nil {
+    if err := models.ToJSON(prod, response); err != nil {
         http.Error(response, "Unable to marshal json", http.StatusBadRequest)
         return
 
@@ -118,7 +117,12 @@ func Update(response http.ResponseWriter, request *http.Request) {
 }
 
 // swagger:route DELETE /products/{id} products deleteProduct
-// delete product.
+// Delete a products by id
+//
+// responses:
+//  201: noContentResponse
+//  404: errorResponse
+//  501: errorResponse
 
 // DeleteProduct function is used to delete a product from the database.
 func DeleteProduct(rw http.ResponseWriter, r *http.Request) {
@@ -128,6 +132,57 @@ func DeleteProduct(rw http.ResponseWriter, r *http.Request) {
         http.Error(rw, err.Error(), http.StatusNotFound)
         return
     }
+}
+
+// swagger:route GET /products/{id} products listSingleProduct
+// Return a list of products from the database
+// responses:
+//  200: productResponse
+//  404: errorResponse
+
+// ListSingle handles GET requests
+func ListSingle(rw http.ResponseWriter, r *http.Request) {
+    id := getProductID(r)
+
+    prod, err := models.GetProductByID(id)
+
+    switch err {
+    case nil:
+
+    case models.ErrProductNotFound:
+        rw.WriteHeader(http.StatusNotFound)
+        models.ToJSON(&utils.GenericError{Message: err.Error()}, rw)
+        return
+    default:
+
+        rw.WriteHeader(http.StatusInternalServerError)
+        models.ToJSON(&utils.GenericError{Message: err.Error()}, rw)
+        return
+    }
+
+    err = models.ToJSON(prod, rw)
+    if err != nil {
+        // we should never be here but log the error just incase
+        log.Fatal(err.Error())
+    }
+}
+
+// getProductID returns the product ID from the URL
+// Panics if cannot convert the id into an integer
+// this should never happen as the router ensures that
+// this is a valid number
+func getProductID(r *http.Request) int {
+    // parse the product id from the url
+    vars := mux.Vars(r)
+
+    // convert the id into an integer and return
+    id, err := strconv.Atoi(vars["id"])
+    if err != nil {
+        // should never happen
+        panic(err)
+    }
+
+    return id
 }
 
 // MiddlewareProductValidation is used to parse the product from body and insert it into context.
