@@ -17,6 +17,7 @@ func RegisterAPIRoutes() *http.Server {
     docOptions := middleware.RedocOpts{SpecURL: "/swagger.yaml"}
     sh := middleware.Redoc(docOptions, nil)
     router := mux.NewRouter()
+
     router.Handle("/swagger.yaml", http.FileServer(http.Dir("./")))
     router.Handle("/docs", sh).Methods("GET")
     router.Path("/api/products").Handler(http.HandlerFunc(handlers.Index))
