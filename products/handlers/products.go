@@ -1,3 +1,17 @@
+// Package handlers of Product API
+//
+// Documntation for Product API
+//
+// Schemes: http
+// BasePath: /
+// Version: 1.0.0
+//
+// Consumes:
+// - appication/json
+//
+// Produces:
+// - application/json
+// swagger:meta
 package handlers
 
 import (
@@ -12,6 +26,30 @@ import (
     "github.com/gorilla/mux"
 )
 
+// A list of products return in the response.
+// swagger:response productsResponse
+type productsResponse struct {
+    // All products in the system.
+    // in: body
+    Body []models.Product
+}
+
+// swagger:parameters deleteProduct  updateProduct
+type productIDParameterWrapper struct {
+    // the id of the product to delete/update from the database.
+    //in: path
+    //required: true
+    ID int `json:"id"`
+}
+
+// returned product in the response.
+// swagger:response productResponse
+type productResponse struct {
+    // All products in the system.
+    // in: body
+    Body models.Product
+}
+
 // Products type.
 type Products struct {
     logger *log.Logger
@@ -21,6 +59,11 @@ type Products struct {
 func NewProducts(logger *log.Logger) *Products {
     return &Products{logger}
 }
+
+// swagger:route GET /products products listProducts
+// Returns a list of products.
+//  responses:
+//      200: productsResponse
 
 // Index function is used to index the current products.
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -32,6 +75,11 @@ func Index(w http.ResponseWriter, r *http.Request) {
     }
 }
 
+// swagger:route POST /products products storeProduct
+// store product.
+//  responses:
+//      200: productResponse
+
 //Store function is used to create a new product.
 func Store(response http.ResponseWriter, request *http.Request) {
     prod := request.Context().Value(utils.KeyProduct{}).(models.Product)
@@ -42,6 +90,11 @@ func Store(response http.ResponseWriter, request *http.Request) {
 
     }
 }
+
+// swagger:route PUT /products/{id} products updateProduct
+// update product.
+//  responses:
+//      200: productResponse
 
 // Update function is used to update a product.
 func Update(response http.ResponseWriter, request *http.Request) {
@@ -62,6 +115,19 @@ func Update(response http.ResponseWriter, request *http.Request) {
 
     }
 
+}
+
+// swagger:route DELETE /products/{id} products deleteProduct
+// delete product.
+
+// DeleteProduct function is used to delete a product from the database.
+func DeleteProduct(rw http.ResponseWriter, r *http.Request) {
+    id, _ := strconv.Atoi(mux.Vars(r)["id"])
+    err := models.DeleteProduct(id)
+    if err != nil {
+        http.Error(rw, err.Error(), http.StatusNotFound)
+        return
+    }
 }
 
 // MiddlewareProductValidation is used to parse the product from body and insert it into context.

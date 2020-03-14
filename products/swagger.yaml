@@ -1,0 +1,122 @@
+basePath: /
+consumes:
+- appication/json
+definitions:
+  Product:
+    properties:
+      created_at:
+        type: string
+        x-go-name: CreatedAt
+      deleted_at:
+        type: string
+        x-go-name: DeletedAt
+      description:
+        description: |-
+          the description for  this product.
+          required: true.
+        type: string
+        x-go-name: Description
+      id:
+        description: the id for this user.
+        format: int64
+        minimum: 1
+        type: integer
+        x-go-name: ID
+      name:
+        description: |-
+          the name for this product.
+          required: true.
+        type: string
+        x-go-name: Name
+      price:
+        description: |-
+          the price for this product.
+          required: true.
+          greater than: 0
+        format: float
+        type: number
+        x-go-name: Price
+      sku:
+        description: |-
+          the sku for this product.
+          it should be a valid sku format.
+          required: true.
+        example: abcdasdas-abcea-abcd
+        type: string
+        x-go-name: SKU
+      updated_at:
+        type: string
+        x-go-name: UpdatedAt
+    required:
+    - id
+    title: Product type.
+    type: object
+    x-go-package: build-microservice-with-go/products/models
+info:
+  description: Documntation for Product API
+  title: of Product API
+  version: 1.0.0
+paths:
+  /products:
+    get:
+      operationId: listProducts
+      responses:
+        "200":
+          $ref: '#/responses/productsResponse'
+      summary: Returns a list of products.
+      tags:
+      - products
+    post:
+      operationId: storeProduct
+      responses:
+        "200":
+          $ref: '#/responses/productResponse'
+      summary: store product.
+      tags:
+      - products
+  /products/{id}:
+    delete:
+      operationId: deleteProduct
+      parameters:
+      - description: the id of the product to delete/update from the database.
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+        x-go-name: ID
+      summary: delete product.
+      tags:
+      - products
+    put:
+      operationId: updateProduct
+      parameters:
+      - description: the id of the product to delete/update from the database.
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+        x-go-name: ID
+      responses:
+        "200":
+          $ref: '#/responses/productResponse'
+      summary: update product.
+      tags:
+      - products
+produces:
+- application/json
+responses:
+  productResponse:
+    description: returned product in the response.
+    schema:
+      $ref: '#/definitions/Product'
+  productsResponse:
+    description: A list of products return in the response.
+    schema:
+      items:
+        $ref: '#/definitions/Product'
+      type: array
+schemes:
+- http
+swagger: "2.0"

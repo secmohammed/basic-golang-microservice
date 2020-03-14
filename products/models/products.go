@@ -11,15 +11,30 @@ import (
 )
 
 // Product type.
+// swagger:model
 type Product struct {
-    ID          int     `json:"id"`
-    Name        string  `json:"name" validate:"required"`
-    Description string  `json:"description" validate:"required"`
-    Price       float32 `json:"price" validate:"gt=0"`
-    SKU         string  `json:"sku" validate:"required,sku"`
-    CreatedAt   string  `json:"created_at"`
-    UpdatedAt   string  `json:"updated_at"`
-    DeletedAt   string  `json:"deleted_at,omitempty"`
+    // the id for this user.
+    // required: true
+    // min: 1
+    ID int `json:"id"`
+    // the name for this product.
+    // required: true.
+    Name string `json:"name" validate:"required"`
+    // the description for  this product.
+    // required: true.
+    Description string `json:"description" validate:"required"`
+    // the price for this product.
+    // required: true.
+    // greater than: 0
+    Price float32 `json:"price" validate:"gt=0"`
+    // the sku for this product.
+    // it should be a valid sku format.
+    // required: true.
+    // example: abcdasdas-abcea-abcd
+    SKU       string `json:"sku" validate:"required,sku"`
+    CreatedAt string `json:"created_at"`
+    UpdatedAt string `json:"updated_at"`
+    DeletedAt string `json:"deleted_at,omitempty"`
 }
 
 var errProductNotFound = fmt.Errorf("Product not found")
@@ -113,5 +128,15 @@ func UpdateProduct(id int, product *Product) error {
     }
     product.ID = id
     products[key] = product
+    return nil
+}
+
+// DeleteProduct function is used to delete a product.
+func DeleteProduct(id int) error {
+    _, key, err := findProduct(id)
+    if err != nil {
+        return err
+    }
+    products = append(products[:key], products[key+1:]...)
     return nil
 }

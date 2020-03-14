@@ -7,18 +7,23 @@ import (
     "os"
     "time"
 
+    "github.com/go-openapi/runtime/middleware"
     "github.com/gorilla/mux"
     "github.com/rs/cors"
 )
 
 // RegisterAPIRoutes is used to register the routes we need for the web application.
 func RegisterAPIRoutes() *http.Server {
+    docOptions := middleware.RedocOpts{SpecURL: "/swagger.yaml"}
+    sh := middleware.Redoc(docOptions, nil)
     router := mux.NewRouter()
+    router.Handle("/swagger.yaml", http.FileServer(http.Dir("./")))
+    router.Handle("/docs", sh).Methods("GET")
     router.Path("/api/products").Handler(http.HandlerFunc(handlers.Index))
     productsPublicArea := router.PathPrefix("/api/products").Subrouter()
     productsPublicArea.Use(handlers.MiddlewareProductValidation)
     productsPublicArea.HandleFunc("", handlers.Store).Methods("POST")
-    productsPublicArea.HandleFunc("/{id}", handlers.Update).Methods("PUT")
+    productsPublicArea.HandleFunc("/{id:[0-9]+}", handlers.Update).Methods("PUT")
     c := cors.New(cors.Options{
         AllowedOrigins:   []string{"http://localhost:" + os.Getenv("APP_PORT")},
         AllowedHeaders:   []string{"Authorization", "Content-Type"},
