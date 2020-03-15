@@ -9,6 +9,7 @@ import (
 
     "build-microservice-with-go/product-images/files"
     "build-microservice-with-go/product-images/handlers"
+    "build-microservice-with-go/product-images/middlewares"
 
     _ "github.com/joho/godotenv/autoload"
 
@@ -57,6 +58,8 @@ func main() {
         "/images/{id:[0-9]+}/{filename:[a-zA-Z]+\\.[a-z]{3}}",
         http.StripPrefix("/images/", http.FileServer(http.Dir(basePath))),
     )
+    gzip := middlewares.GzipHandler{}
+    gh.Use(gzip.GzipMiddleware)
     // create a new server
     s := http.Server{
         Addr:         bindAddress,       // configure the bind address
